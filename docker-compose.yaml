@@ -1,0 +1,52 @@
+version: '3'
+
+services:
+
+    app:
+        build: .
+        container_name: app
+        entrypoint: ./.docker/entrypoint.sh
+        environment:
+            - _DB_HOST=db
+            - _DB_DATABASE=gaslog
+            - _DB_USERNAME=root
+            - _DB_PASSWORD=root
+        ports:
+            - "9001:9001"
+        volumes:
+            - .:/var/www
+        networks:
+            - app-network
+        depends_on:
+            - db
+    nginx:
+        build: .docker/nginx
+        container_name: nginx
+        restart: always
+        tty: true
+        ports:
+            - "8000:80"
+        volumes:
+            - .:/var/www
+        networks:
+            - app-network
+        depends_on:
+            - app
+    db:
+        build: ./.docker/mysql
+        container_name: db
+        restart: always
+        tty: true
+        ports:
+            - "33006:3306"
+        volumes:
+            - ./.docker/dbdata:/var/lib/mysql
+        environment:
+            - MYSQL_DATABASE=gaslog
+            - MYSQL_ROOT_PASSWORD=root
+            - MYSQL_USER=root
+        networks:
+            - app-network
+networks:
+    app-network:
+        driver: bridge
